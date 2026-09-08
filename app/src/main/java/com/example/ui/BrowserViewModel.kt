@@ -10,6 +10,8 @@ import com.example.data.model.DownloadItem
 import com.example.data.model.HistoryItem
 import com.example.data.model.QuickShortcutItem
 import com.example.data.repository.BrowserRepository
+import com.example.data.repository.NewsArticle
+import com.example.data.repository.NewsRepository
 import com.example.data.repository.SearchEngine
 import com.example.data.repository.SettingsRepository
 import com.example.data.repository.ThemeMode
@@ -62,6 +64,12 @@ class BrowserViewModel(application: Application) : AndroidViewModel(application)
     )
     val settingsRepo = SettingsRepository(application)
     val downloadManager = PaliaDownloadManager.getInstance(application)
+    private val newsRepository = NewsRepository()
+
+    private val _news = MutableStateFlow<List<NewsArticle>>(emptyList())
+    val news: StateFlow<List<NewsArticle>> = _news.asStateFlow()
+    private val _newsLoading = MutableStateFlow(false)
+    val newsLoading: StateFlow<Boolean> = _newsLoading.asStateFlow()
 
     val settings: StateFlow<UserSettings> = settingsRepo.settings
     val bookmarks: StateFlow<List<BookmarkItem>> = browserRepo.bookmarks.stateIn(
@@ -98,6 +106,21 @@ class BrowserViewModel(application: Application) : AndroidViewModel(application)
 
     val activeTab: BrowserTab?
         get() = _tabs.value.find { it.id == _activeTabId.value }
+
+    fun refreshNews() {
+        if (_newsLoading.value) return
+        viewModelScope.launch {
+            _newsLoading.value = true
+            runCatching { newsRepository.fetch(settings.value.newsLanguage) }
+                .onSuccess { _news.value = it }
+            _newsLoading.value = false
+        }
+    }
+
+    fun setNewsLanguage(language: String) {
+        settingsRepo.updateNewsLanguage(language)
+        refreshNews()
+    }
 
     fun navigateTo(nav: MainNavigationTab) {
         _currentNav.value = nav

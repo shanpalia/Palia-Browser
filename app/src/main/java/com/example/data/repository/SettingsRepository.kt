@@ -27,7 +27,8 @@ data class UserSettings(
     val autoStartDownloads: Boolean = true,
     val askBeforeDownload: Boolean = true,
     val showDownloadNotifications: Boolean = true,
-    val defaultDesktopMode: Boolean = false
+    val defaultDesktopMode: Boolean = false,
+    val newsLanguage: String = "Hindi"
 )
 
 class SettingsRepository(context: Context) {
@@ -53,7 +54,8 @@ class SettingsRepository(context: Context) {
             autoStartDownloads = prefs.getBoolean("auto_start", true),
             askBeforeDownload = prefs.getBoolean("ask_before_download", true),
             showDownloadNotifications = prefs.getBoolean("download_notifications", true),
-            defaultDesktopMode = prefs.getBoolean("desktop_mode", false)
+            defaultDesktopMode = prefs.getBoolean("desktop_mode", false),
+            newsLanguage = prefs.getString("news_language", "Hindi") ?: "Hindi"
         )
     }
 
@@ -96,6 +98,11 @@ class SettingsRepository(context: Context) {
     fun updateDesktopMode(desktop: Boolean) {
         prefs.edit().putBoolean("desktop_mode", desktop).apply()
         _settings.value = _settings.value.copy(defaultDesktopMode = desktop)
+    }
+
+    fun updateNewsLanguage(language: String) {
+        prefs.edit().putString("news_language", language).apply()
+        _settings.value = _settings.value.copy(newsLanguage = language)
     }
 
     fun updateHomePage(url: String) {

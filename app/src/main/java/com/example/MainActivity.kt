@@ -6,7 +6,6 @@ import android.content.pm.PackageManager
 import android.os.Build
 import android.os.Bundle
 import androidx.activity.ComponentActivity
-import android.app.Activity
 import androidx.activity.compose.BackHandler
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.compose.setContent
@@ -195,17 +194,20 @@ fun PaliaBrowserApp(viewModel: BrowserViewModel) {
         }
     }
 
-    // Android-style back behavior: first WebView history, then Home, then exit.
-    val activity = androidx.compose.ui.platform.LocalContext.current as? Activity
+    // Back handling: navigates back in browser history or returns to Home tab
     BackHandler {
-        when {
-            currentNav != MainNavigationTab.HOME -> viewModel.navigateTo(MainNavigationTab.HOME)
-            activeTab != null && !activeTab.isHome && activeTab.canGoBack -> viewModel.goBack()
-            activeTab != null && !activeTab.isHome -> viewModel.goHome()
-            else -> activity?.finish()
+        if (currentNav != MainNavigationTab.HOME) {
+            viewModel.navigateTo(MainNavigationTab.HOME)
+        } else if (activeTab != null && !activeTab.isHome) {
+            if (activeTab.canGoBack) {
+                viewModel.goBack()
+            } else {
+                viewModel.goHome()
+            }
         }
     }
 
+    // Keep the app navigation visible even while browsing so the mobile UI never collapses.
     val isFullWebBrowsing = false
 
     Scaffold(

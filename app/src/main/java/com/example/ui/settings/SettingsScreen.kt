@@ -22,6 +22,7 @@ import androidx.compose.material.icons.filled.Info
 import androidx.compose.material.icons.filled.Notifications
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.filled.Wifi
+import androidx.compose.material.icons.filled.Language
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
@@ -268,6 +269,32 @@ fun SettingsScreen(
                                 Text("Clear Browsing Data", style = MaterialTheme.typography.bodyLarge.copy(fontWeight = FontWeight.SemiBold))
                                 Text("History, cookies, and cached data", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
                             }
+                        }
+                    }
+                }
+            }
+
+            SettingsSectionHeader("Personalized News")
+            Card(
+                modifier = Modifier.fillMaxWidth(),
+                shape = RoundedCornerShape(16.dp),
+                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant)
+            ) {
+                Column(modifier = Modifier.padding(14.dp)) {
+                    Text("News Language", fontWeight = FontWeight.Bold)
+                    Text("Home news will refresh in your selected language", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                    Spacer(Modifier.height(8.dp))
+                    val languages = listOf("Hindi","English","Bengali","Telugu","Tamil","Marathi","Gujarati","Kannada","Malayalam","Punjabi")
+                    var expanded by remember { mutableStateOf(false) }
+                    Box {
+                        Row(Modifier.fillMaxWidth().clickable{expanded=true}.padding(vertical=10.dp), verticalAlignment=Alignment.CenterVertically) {
+                            Icon(Icons.Default.Language, null, tint=PaliaCyan)
+                            Spacer(Modifier.width(12.dp))
+                            Text(settings.newsLanguage, Modifier.weight(1f), fontWeight=FontWeight.SemiBold)
+                            Text("▾", fontSize=20.sp)
+                        }
+                        DropdownMenu(expanded=expanded, onDismissRequest={expanded=false}) {
+                            languages.forEach { language -> DropdownMenuItem(text={Text(language)}, onClick={expanded=false; viewModel.setNewsLanguage(language)}) }
                         }
                     }
                 }
