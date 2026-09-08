@@ -20,7 +20,7 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.items
-import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.items as columnItems
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardActions
@@ -344,7 +344,7 @@ fun HomeScreen(
         if (newsLoading && news.isEmpty()) {
             item { LinearProgressIndicator(modifier = Modifier.fillMaxWidth()) }
         }
-        items(news.take(8)) { article ->
+        columnItems(news.take(8)) { article ->
             Card(
                 modifier = Modifier.fillMaxWidth().clickable { viewModel.openUrl(article.url) },
                 shape = RoundedCornerShape(14.dp),
@@ -396,7 +396,7 @@ fun HomeScreen(
                 }
             }
 
-            items(recentHistory.take(5)) { historyItem ->
+            columnItems(recentHistory.take(5)) { historyItem ->
                 Card(
                     modifier = Modifier
                         .fillMaxWidth()

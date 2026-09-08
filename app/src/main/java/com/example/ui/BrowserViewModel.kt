@@ -110,11 +110,19 @@ class BrowserViewModel(application: Application) : AndroidViewModel(application)
 
     fun refreshNews() {
         newsRefreshJob?.cancel()
+        val language = settings.value.newsLanguage
         newsRefreshJob = viewModelScope.launch {
             _newsLoading.value = true
-            val result = runCatching { newsRepository.fetch(settings.value.newsLanguage) }
-            result.onSuccess { _news.value = it }
-            _newsLoading.value = false
+            try {
+                val freshNews = newsRepository.fetch(language)
+                if (freshNews.isNotEmpty()) {
+                    _news.value = freshNews
+                }
+            } catch (_: Exception) {
+                // Keep the previous feed visible if a refresh temporarily fails.
+            } finally {
+                _newsLoading.value = false
+            }
         }
     }
 

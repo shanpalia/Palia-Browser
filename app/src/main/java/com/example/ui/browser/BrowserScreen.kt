@@ -64,7 +64,6 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.example.browser.model.BrowserTab
 import com.example.ui.BrowserViewModel
-import com.example.ui.MainNavigationTab
 import com.example.ui.theme.DownloadGreen
 import com.example.ui.theme.PaliaCyan
 
