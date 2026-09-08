@@ -77,6 +77,7 @@ fun SettingsScreen(
     var showClearDataDialog by remember { mutableStateOf(false) }
     var showSearchEngineMenu by remember { mutableStateOf(false) }
     var showThemeMenu by remember { mutableStateOf(false) }
+    var showNewsLanguageDialog by remember { mutableStateOf(false) }
 
     Scaffold(
         modifier = modifier.fillMaxSize(),
@@ -276,33 +277,21 @@ fun SettingsScreen(
 
             SettingsSectionHeader("Personalized News")
             Card(
-                modifier = Modifier.fillMaxWidth(),
+                modifier = Modifier.fillMaxWidth().clickable { showNewsLanguageDialog = true },
                 shape = RoundedCornerShape(16.dp),
                 colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant)
             ) {
-                Column(modifier = Modifier.padding(14.dp)) {
-                    Text("News Language", fontWeight = FontWeight.Bold)
-                    Text("Home news will refresh in your selected language", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                    Spacer(Modifier.height(8.dp))
-                    val languages = listOf("Hindi","English","Bengali","Telugu","Tamil","Marathi","Gujarati","Kannada","Malayalam","Punjabi")
-                    var expanded by remember { mutableStateOf(false) }
-                    Box {
-                        Row(Modifier.fillMaxWidth().clickable{expanded=true}.padding(vertical=10.dp), verticalAlignment=Alignment.CenterVertically) {
-                            Icon(Icons.Default.Language, null, tint=PaliaCyan)
-                            Spacer(Modifier.width(12.dp))
-                            Text(settings.newsLanguage, Modifier.weight(1f), fontWeight=FontWeight.SemiBold)
-                            Text("▾", fontSize=20.sp)
-                        }
-                        DropdownMenu(expanded=expanded, onDismissRequest={expanded=false}) {
-                            languages.forEach { language -> DropdownMenuItem(
-                                text = { Text(language) },
-                                onClick = {
-                                    expanded = false
-                                    viewModel.setNewsLanguage(language)
-                                }
-                            ) }
-                        }
+                Row(
+                    modifier = Modifier.fillMaxWidth().padding(16.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Icon(Icons.Default.Language, contentDescription = null, tint = PaliaCyan)
+                    Spacer(Modifier.width(14.dp))
+                    Column(Modifier.weight(1f)) {
+                        Text("News Language", fontWeight = FontWeight.Bold)
+                        Text("${settings.newsLanguage} • Home news", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
                     }
+                    Text("›", fontSize = 28.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
                 }
             }
 
@@ -384,6 +373,32 @@ fun SettingsScreen(
 
             Spacer(modifier = Modifier.height(24.dp))
         }
+    }
+
+    if (showNewsLanguageDialog) {
+        val languages = listOf("Hindi", "English", "Bengali", "Telugu", "Tamil", "Marathi", "Gujarati", "Kannada", "Malayalam", "Punjabi")
+        AlertDialog(
+            onDismissRequest = { showNewsLanguageDialog = false },
+            title = { Text("News Language") },
+            text = {
+                Column {
+                    languages.forEach { language ->
+                        TextButton(
+                            onClick = {
+                                viewModel.setNewsLanguage(language)
+                                showNewsLanguageDialog = false
+                            },
+                            modifier = Modifier.fillMaxWidth()
+                        ) {
+                            Text(language, modifier = Modifier.fillMaxWidth())
+                        }
+                    }
+                }
+            },
+            confirmButton = {
+                TextButton(onClick = { showNewsLanguageDialog = false }) { Text("Close") }
+            }
+        )
     }
 
     // Clear Data Confirmation Dialog
