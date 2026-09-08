@@ -534,43 +534,54 @@ private fun ShortcutItemView(
     onClick: () -> Unit,
     onLongClick: () -> Unit
 ) {
+    val title = shortcut.title.trim()
+    val key = title.lowercase()
+    val (glyph, tint) = when {
+        key == "google" -> "G" to Color(0xFF4285F4)
+        key == "youtube" -> "▶" to Color(0xFFFF0000)
+        key == "facebook" -> "f" to Color(0xFF1877F2)
+        key == "instagram" -> "◎" to Color(0xFFE1306C)
+        key == "x" || key == "twitter" -> "X" to Color.Black
+        key == "whatsapp" -> "◉" to Color(0xFF25D366)
+        key == "amazon" -> "a" to Color(0xFFFF9900)
+        else -> "●" to PaliaCyan
+    }
+
     Column(
         modifier = Modifier
-            .width(76.dp)
-            .clip(RoundedCornerShape(12.dp))
+            .width(78.dp)
+            .clip(RoundedCornerShape(14.dp))
             .clickable(onClick = onClick)
-            .padding(vertical = 8.dp),
+            .padding(vertical = 7.dp),
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
         Box(
             modifier = Modifier
-                .size(50.dp)
+                .size(54.dp)
                 .clip(CircleShape)
-                .background(MaterialTheme.colorScheme.surfaceVariant)
-                .border(1.dp, PaliaCyan.copy(alpha = 0.3f), CircleShape),
+                .background(Color.White)
+                .border(1.dp, tint.copy(alpha = 0.18f), CircleShape),
             contentAlignment = Alignment.Center
         ) {
-            val icon = when (shortcut.title.lowercase()) {
-                "google" -> Icons.Default.Search
-                "youtube" -> Icons.Default.PlayArrow
-                "facebook" -> Icons.Default.Public
-                "instagram" -> Icons.Default.PhotoCamera
-                "x", "twitter" -> Icons.Default.Public
-                "whatsapp" -> Icons.Default.Message
-                "amazon" -> Icons.Default.ShoppingCart
-                else -> Icons.Default.Public
+            Box(
+                modifier = Modifier
+                    .size(42.dp)
+                    .clip(CircleShape)
+                    .background(tint.copy(alpha = 0.10f)),
+                contentAlignment = Alignment.Center
+            ) {
+                Text(
+                    text = glyph,
+                    color = tint,
+                    fontSize = if (glyph == "G") 31.sp else 27.sp,
+                    fontWeight = FontWeight.Bold
+                )
             }
-            Icon(
-                imageVector = icon,
-                contentDescription = shortcut.title,
-                tint = PaliaCyan,
-                modifier = Modifier.size(27.dp)
-            )
         }
         Spacer(modifier = Modifier.height(6.dp))
         Text(
-            text = shortcut.title,
-            style = MaterialTheme.typography.labelSmall,
+            text = title,
+            style = MaterialTheme.typography.labelSmall.copy(fontWeight = FontWeight.Medium),
             maxLines = 1,
             overflow = TextOverflow.Ellipsis,
             textAlign = TextAlign.Center
