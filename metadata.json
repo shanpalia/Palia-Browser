@@ -1,0 +1,6 @@
+{
+  "name": "Palia Browser",
+  "description": "A modern, fast, lightweight browser with a powerful built-in download manager, resumable downloads, multiple tabs, bookmarks, and background downloading.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

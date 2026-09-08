@@ -1,0 +1,46 @@
+workflows:
+  android-release:
+    name: Palia Browser APK
+    max_build_duration: 60
+
+    environment:
+      java: 17
+
+    scripts:
+      - name: Ensure required project files exist
+        script: |
+          set -e
+          test -f .env.example || printf "# Optional environment placeholders\n" > .env.example
+          chmod +x ./gradlew
+
+      - name: Prepare release signing key
+        script: |
+          set -e
+          KEYSTORE_PATH="$CM_BUILD_DIR/palia-browser-release.jks"
+          keytool -genkeypair -v \
+            -keystore "$KEYSTORE_PATH" \
+            -storepass "palia-browser-local" \
+            -keypass "palia-browser-local" \
+            -alias "palia-browser" \
+            -keyalg RSA \
+            -keysize 2048 \
+            -validity 10000 \
+            -dname "CN=Palia Browser, OU=Shanpalia, O=Shanpalia, C=IN"
+          echo "CM_KEYSTORE_PATH=$KEYSTORE_PATH" >> "$CM_ENV"
+          echo "CM_KEYSTORE_PASSWORD=palia-browser-local" >> "$CM_ENV"
+          echo "CM_KEY_ALIAS=palia-browser" >> "$CM_ENV"
+          echo "CM_KEY_PASSWORD=palia-browser-local" >> "$CM_ENV"
+
+      - name: Verify Android/Gradle environment
+        script: |
+          set -e
+          java -version
+          ./gradlew --version
+
+      - name: Build signed release APK
+        script: |
+          set -e
+          ./gradlew :app:assembleRelease --no-daemon --stacktrace
+
+    artifacts:
+      - app/build/outputs/apk/release/*.apk
