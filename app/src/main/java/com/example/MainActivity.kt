@@ -12,9 +12,6 @@ import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.activity.viewModels
-import androidx.compose.animation.AnimatedVisibility
-import androidx.compose.animation.slideInVertically
-import androidx.compose.animation.slideOutVertically
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -207,23 +204,16 @@ fun PaliaBrowserApp(viewModel: BrowserViewModel) {
         }
     }
 
-    // While a real web page is open, keep the browser clean: only the address bar and page remain.
-    // Android system Back/Home/Recent buttons handle navigation outside the page.
-    val isFullWebBrowsing = activeTab != null && !activeTab.isHome && currentNav == MainNavigationTab.HOME
-
     Scaffold(
         modifier = Modifier.fillMaxSize(),
         bottomBar = {
-            // Show bottom navigation bar when on home dashboard or other screens
-            AnimatedVisibility(
-                visible = !isFullWebBrowsing,
-                enter = slideInVertically(initialOffsetY = { it }),
-                exit = slideOutVertically(targetOffsetY = { it })
+            // Keep Palia Browser navigation visible on every screen, including web pages.
+            // The BrowserScreen itself has no duplicate bottom toolbar, so this remains the
+            // single, consistent app navigation bar.
+            NavigationBar(
+                containerColor = MaterialTheme.colorScheme.surface,
+                tonalElevation = 6.dp
             ) {
-                NavigationBar(
-                    containerColor = MaterialTheme.colorScheme.surface,
-                    tonalElevation = 6.dp
-                ) {
                     NavigationBarItem(
                         selected = currentNav == MainNavigationTab.HOME,
                         onClick = { viewModel.navigateTo(MainNavigationTab.HOME) },
@@ -310,13 +300,12 @@ fun PaliaBrowserApp(viewModel: BrowserViewModel) {
                         modifier = Modifier.testTag("nav_settings")
                     )
                 }
-            }
         }
     ) { innerPadding ->
         Box(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(if (isFullWebBrowsing) androidx.compose.foundation.layout.PaddingValues() else innerPadding)
+                .padding(innerPadding)
         ) {
             when (currentNav) {
                 MainNavigationTab.HOME -> {
