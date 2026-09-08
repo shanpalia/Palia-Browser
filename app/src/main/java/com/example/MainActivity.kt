@@ -207,8 +207,9 @@ fun PaliaBrowserApp(viewModel: BrowserViewModel) {
         }
     }
 
-    // Keep the app navigation visible even while browsing so the mobile UI never collapses.
-    val isFullWebBrowsing = false
+    // While a real web page is open, keep the browser clean: only the address bar and page remain.
+    // Android system Back/Home/Recent buttons handle navigation outside the page.
+    val isFullWebBrowsing = activeTab != null && !activeTab.isHome && currentNav == MainNavigationTab.HOME
 
     Scaffold(
         modifier = Modifier.fillMaxSize(),

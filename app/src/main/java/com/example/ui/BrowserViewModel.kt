@@ -70,6 +70,7 @@ class BrowserViewModel(application: Application) : AndroidViewModel(application)
     val news: StateFlow<List<NewsArticle>> = _news.asStateFlow()
     private val _newsLoading = MutableStateFlow(false)
     val newsLoading: StateFlow<Boolean> = _newsLoading.asStateFlow()
+    private var newsRefreshJob: kotlinx.coroutines.Job? = null
 
     val settings: StateFlow<UserSettings> = settingsRepo.settings
     val bookmarks: StateFlow<List<BookmarkItem>> = browserRepo.bookmarks.stateIn(
@@ -108,11 +109,11 @@ class BrowserViewModel(application: Application) : AndroidViewModel(application)
         get() = _tabs.value.find { it.id == _activeTabId.value }
 
     fun refreshNews() {
-        if (_newsLoading.value) return
-        viewModelScope.launch {
+        newsRefreshJob?.cancel()
+        newsRefreshJob = viewModelScope.launch {
             _newsLoading.value = true
-            runCatching { newsRepository.fetch(settings.value.newsLanguage) }
-                .onSuccess { _news.value = it }
+            val result = runCatching { newsRepository.fetch(settings.value.newsLanguage) }
+            result.onSuccess { _news.value = it }
             _newsLoading.value = false
         }
     }
