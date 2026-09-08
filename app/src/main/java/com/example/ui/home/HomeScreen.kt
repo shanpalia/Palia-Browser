@@ -113,7 +113,7 @@ fun HomeScreen(viewModel: BrowserViewModel, modifier: Modifier = Modifier) {
             Row(verticalAlignment=Alignment.CenterVertically, modifier=Modifier.fillMaxWidth()) {
                 Text("News • ${settings.newsLanguage}", style=MaterialTheme.typography.titleLarge, fontWeight=FontWeight.Bold, modifier=Modifier.weight(1f))
                 TextButton(onClick={viewModel.navigateTo(MainNavigationTab.SETTINGS)}) { Icon(Icons.Default.Language,null); Spacer(Modifier.width(4.dp)); Text("Language") }
-                IconButton(onClick={viewModel.refreshNews}) { Icon(Icons.Default.Refresh,"Refresh news") }
+                IconButton(onClick={ viewModel.refreshNews() }) { Icon(Icons.Default.Refresh,"Refresh news") }
             }
         }
         if (newsLoading && news.isEmpty()) item { LinearProgressIndicator(Modifier.fillMaxWidth()) }
