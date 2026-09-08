@@ -294,7 +294,13 @@ fun SettingsScreen(
                             Text("▾", fontSize=20.sp)
                         }
                         DropdownMenu(expanded=expanded, onDismissRequest={expanded=false}) {
-                            languages.forEach { language -> DropdownMenuItem(text={Text(language)}, onClick={expanded=false; viewModel.setNewsLanguage(language)}) }
+                            languages.forEach { language -> DropdownMenuItem(
+                                text = { Text(language) },
+                                onClick = {
+                                    expanded = false
+                                    viewModel.setNewsLanguage(language)
+                                }
+                            ) }
                         }
                     }
                 }

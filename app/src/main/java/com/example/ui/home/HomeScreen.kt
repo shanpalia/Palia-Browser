@@ -4,9 +4,6 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.grid.GridCells
-import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
-import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -37,10 +34,8 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import com.example.data.model.QuickShortcutItem
 import com.example.ui.BrowserViewModel
 import com.example.ui.MainNavigationTab
-import com.example.ui.theme.DownloadGreen
 import com.example.ui.theme.PaliaCyan
 
 @Composable
@@ -120,7 +115,7 @@ fun HomeScreen(viewModel: BrowserViewModel, modifier: Modifier = Modifier) {
         if (!newsLoading && news.isEmpty()) item {
             Card(shape=RoundedCornerShape(18.dp)) { Column(Modifier.padding(18.dp)) { Text("News unavailable", fontWeight=FontWeight.Bold); Text("Check your internet connection and tap refresh.") } }
         }
-        items(news) { article ->
+        androidx.compose.foundation.lazy.items(news) { article ->
             Card(modifier=Modifier.fillMaxWidth().clickable{viewModel.openUrl(article.url)}, shape=RoundedCornerShape(18.dp)) {
                 Column(Modifier.padding(14.dp)) {
                     Text(article.title, style=MaterialTheme.typography.titleMedium, fontWeight=FontWeight.SemiBold, maxLines=3, overflow=TextOverflow.Ellipsis)
@@ -131,7 +126,7 @@ fun HomeScreen(viewModel: BrowserViewModel, modifier: Modifier = Modifier) {
         }
         if (recentHistory.isNotEmpty()) {
             item { Text("Recently Visited", style=MaterialTheme.typography.titleLarge, fontWeight=FontWeight.Bold) }
-            items(recentHistory.take(4)) { item ->
+            androidx.compose.foundation.lazy.items(recentHistory.take(4)) { item ->
                 ListItem(headlineContent={Text(item.title, maxLines=1, overflow=TextOverflow.Ellipsis)}, supportingContent={Text(item.url, maxLines=1, overflow=TextOverflow.Ellipsis)}, leadingContent={Icon(Icons.Default.Public,null)}, modifier=Modifier.clickable{viewModel.openUrl(item.url)})
             }
         }
