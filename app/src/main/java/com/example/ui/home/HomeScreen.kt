@@ -1,5 +1,8 @@
 package com.example.ui.home
 
+import android.graphics.Bitmap
+import android.graphics.BitmapFactory
+import android.net.Uri
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -59,6 +62,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.painterResource
@@ -69,6 +73,10 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
+import java.net.HttpURLConnection
+import java.net.URL
 import com.shanpalia.paliabrowser.R
 import com.example.data.model.QuickShortcutItem
 import com.example.ui.BrowserViewModel
@@ -587,6 +595,12 @@ private fun ShortcutItemView(
     onClick: () -> Unit,
     onLongClick: () -> Unit
 ) {
+    var favicon by remember(shortcut.url) { mutableStateOf<Bitmap?>(null) }
+
+    LaunchedEffect(shortcut.url) {
+        favicon = loadShortcutFavicon(shortcut.url)
+    }
+
     Column(
         modifier = Modifier
             .width(76.dp)
@@ -603,12 +617,22 @@ private fun ShortcutItemView(
                 .border(1.dp, PaliaCyan.copy(alpha = 0.3f), CircleShape),
             contentAlignment = Alignment.Center
         ) {
-            val initial = shortcut.title.take(1).uppercase()
-            Text(
-                text = initial,
-                style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold),
-                color = PaliaCyan
-            )
+            if (favicon != null) {
+                Image(
+                    bitmap = favicon!!.asImageBitmap(),
+                    contentDescription = shortcut.title,
+                    modifier = Modifier
+                        .size(38.dp)
+                        .clip(CircleShape)
+                )
+            } else {
+                val initial = shortcut.title.take(1).uppercase()
+                Text(
+                    text = initial,
+                    style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold),
+                    color = PaliaCyan
+                )
+            }
         }
         Spacer(modifier = Modifier.height(6.dp))
         Text(
@@ -618,5 +642,42 @@ private fun ShortcutItemView(
             overflow = TextOverflow.Ellipsis,
             textAlign = TextAlign.Center
         )
+    }
+}
+
+private suspend fun loadShortcutFavicon(url: String): Bitmap? = withContext(Dispatchers.IO) {
+    try {
+        val uri = Uri.parse(url)
+        val host = uri.host?.removePrefix("www.") ?: return@withContext null
+
+        // Prefer the site's own favicon so the shortcut shows the original website icon.
+        val direct = decodeFavicon("https://$host/favicon.ico")
+        if (direct != null) return@withContext direct
+
+        // Fallback for sites that do not expose /favicon.ico.
+        val fallback = "https://www.google.com/s2/favicons?sz=128&domain_url=${Uri.encode("https://$host")}"
+        decodeFavicon(fallback)
+    } catch (_: Exception) {
+        null
+    }
+}
+
+private fun decodeFavicon(faviconUrl: String): Bitmap? {
+    return try {
+        val connection = (URL(faviconUrl).openConnection() as HttpURLConnection).apply {
+            connectTimeout = 7000
+            readTimeout = 7000
+            instanceFollowRedirects = true
+            requestMethod = "GET"
+            setRequestProperty("User-Agent", "Mozilla/5.0")
+        }
+        try {
+            if (connection.responseCode !in 200..299) return null
+            connection.inputStream.use { BitmapFactory.decodeStream(it) }
+        } finally {
+            connection.disconnect()
+        }
+    } catch (_: Exception) {
+        null
     }
 }

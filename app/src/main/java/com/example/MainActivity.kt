@@ -1,6 +1,7 @@
 package com.example
 
 import android.Manifest
+import android.app.Activity
 import android.content.Intent
 import android.content.pm.PackageManager
 import android.os.Build
@@ -55,6 +56,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
@@ -161,6 +163,7 @@ private fun PaliaBrowserSplash() {
 
 @Composable
 fun PaliaBrowserApp(viewModel: BrowserViewModel) {
+    val context = LocalContext.current
     var showSplash by remember { mutableStateOf(true) }
 
     LaunchedEffect(Unit) {
@@ -191,7 +194,8 @@ fun PaliaBrowserApp(viewModel: BrowserViewModel) {
         }
     }
 
-    // Back handling: navigates back in browser history or returns to Home tab
+    // Normal Android Back behavior: utility screen -> Home, web page -> WebView history,
+    // web page without history -> Home, Home page -> exit the Activity.
     BackHandler {
         if (currentNav != MainNavigationTab.HOME) {
             viewModel.navigateTo(MainNavigationTab.HOME)
@@ -201,6 +205,8 @@ fun PaliaBrowserApp(viewModel: BrowserViewModel) {
             } else {
                 viewModel.goHome()
             }
+        } else {
+            (context as? Activity)?.finish()
         }
     }
 
@@ -216,9 +222,8 @@ fun PaliaBrowserApp(viewModel: BrowserViewModel) {
             ) {
                     NavigationBarItem(
                         selected = currentNav == MainNavigationTab.HOME,
-                        onClick = { viewModel.navigateTo(MainNavigationTab.HOME) },
+                        onClick = { viewModel.goHome() },
                         icon = { Icon(Icons.Default.Home, contentDescription = "Home") },
-                        label = { Text("Home") },
                         colors = NavigationBarItemDefaults.colors(
                             selectedIconColor = PaliaCyan,
                             selectedTextColor = PaliaCyan,
@@ -239,7 +244,6 @@ fun PaliaBrowserApp(viewModel: BrowserViewModel) {
                                 Icon(Icons.Default.Layers, contentDescription = "Tabs")
                             }
                         },
-                        label = { Text("Tabs") },
                         colors = NavigationBarItemDefaults.colors(
                             selectedIconColor = PaliaCyan,
                             selectedTextColor = PaliaCyan,
@@ -265,7 +269,6 @@ fun PaliaBrowserApp(viewModel: BrowserViewModel) {
                                 Icon(Icons.Default.Download, contentDescription = "Downloads")
                             }
                         },
-                        label = { Text("Downloads") },
                         colors = NavigationBarItemDefaults.colors(
                             selectedIconColor = DownloadGreen,
                             selectedTextColor = DownloadGreen,
@@ -278,7 +281,6 @@ fun PaliaBrowserApp(viewModel: BrowserViewModel) {
                         selected = currentNav == MainNavigationTab.BOOKMARKS,
                         onClick = { viewModel.navigateTo(MainNavigationTab.BOOKMARKS) },
                         icon = { Icon(Icons.Default.Bookmark, contentDescription = "Bookmarks") },
-                        label = { Text("Bookmarks") },
                         colors = NavigationBarItemDefaults.colors(
                             selectedIconColor = PaliaCyan,
                             selectedTextColor = PaliaCyan,
@@ -291,7 +293,6 @@ fun PaliaBrowserApp(viewModel: BrowserViewModel) {
                         selected = currentNav == MainNavigationTab.SETTINGS,
                         onClick = { viewModel.navigateTo(MainNavigationTab.SETTINGS) },
                         icon = { Icon(Icons.Default.Settings, contentDescription = "Settings") },
-                        label = { Text("Settings") },
                         colors = NavigationBarItemDefaults.colors(
                             selectedIconColor = PaliaCyan,
                             selectedTextColor = PaliaCyan,
