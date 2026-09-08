@@ -1,8 +1,5 @@
 package com.example.ui.settings
 
-import android.content.Intent
-import android.net.Uri
-
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -25,8 +22,6 @@ import androidx.compose.material.icons.filled.Info
 import androidx.compose.material.icons.filled.Notifications
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.filled.Wifi
-import androidx.compose.material.icons.filled.SystemUpdate
-import androidx.compose.material.icons.filled.ChevronRight
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
@@ -76,7 +71,6 @@ fun SettingsScreen(
     modifier: Modifier = Modifier
 ) {
     val settings by viewModel.settings.collectAsStateWithLifecycle()
-    val context = LocalContext.current
     val scrollState = rememberScrollState()
 
     var showClearDataDialog by remember { mutableStateOf(false) }
@@ -279,27 +273,40 @@ fun SettingsScreen(
                 }
             }
 
-            // App Update
+            // App Update — kept inside Settings, UC-style simple row
             SettingsSectionHeader("Updates")
             Card(
-                modifier = Modifier.fillMaxWidth(),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .clickable { viewModel.openUrl("https://github.com/Shanpalia/palia-browser/releases") },
                 shape = RoundedCornerShape(16.dp),
                 colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant)
             ) {
                 Row(
-                    modifier = Modifier.fillMaxWidth().clickable {
-                        val intent = Intent(Intent.ACTION_VIEW, Uri.parse("https://github.com/Shanpalia/palia-browser/releases"))
-                        context.startActivity(intent)
-                    }.padding(16.dp),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(16.dp),
                     verticalAlignment = Alignment.CenterVertically
                 ) {
-                    Icon(Icons.Default.SystemUpdate, contentDescription = null, tint = PaliaCyan, modifier = Modifier.size(28.dp))
+                    Icon(
+                        Icons.Default.Info,
+                        contentDescription = "App Update",
+                        tint = PaliaCyan,
+                        modifier = Modifier.size(28.dp)
+                    )
                     Spacer(modifier = Modifier.width(14.dp))
                     Column(modifier = Modifier.weight(1f)) {
-                        Text("App Update", style = MaterialTheme.typography.bodyLarge.copy(fontWeight = FontWeight.Bold))
-                        Text("Check for the latest Palia Browser version", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                        Text(
+                            "App Update",
+                            style = MaterialTheme.typography.bodyLarge.copy(fontWeight = FontWeight.Bold)
+                        )
+                        Text(
+                            "Check for the latest Palia Browser version",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
                     }
-                    Icon(Icons.Default.ChevronRight, contentDescription = null)
+                    Text("›", fontSize = 28.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
                 }
             }
 
