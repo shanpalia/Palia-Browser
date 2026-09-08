@@ -207,7 +207,8 @@ fun PaliaBrowserApp(viewModel: BrowserViewModel) {
         }
     }
 
-    val isFullWebBrowsing = currentNav == MainNavigationTab.HOME && activeTab != null && !activeTab.isHome
+    // Keep the app navigation visible even while browsing so the mobile UI never collapses.
+    val isFullWebBrowsing = false
 
     Scaffold(
         modifier = Modifier.fillMaxSize(),

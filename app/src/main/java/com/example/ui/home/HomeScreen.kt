@@ -33,6 +33,10 @@ import androidx.compose.material.icons.filled.Download
 import androidx.compose.material.icons.filled.History
 import androidx.compose.material.icons.filled.Public
 import androidx.compose.material.icons.filled.Search
+import androidx.compose.material.icons.filled.ShoppingCart
+import androidx.compose.material.icons.filled.PlayArrow
+import androidx.compose.material.icons.filled.PhotoCamera
+import androidx.compose.material.icons.filled.Message
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
@@ -546,11 +550,21 @@ private fun ShortcutItemView(
                 .border(1.dp, PaliaCyan.copy(alpha = 0.3f), CircleShape),
             contentAlignment = Alignment.Center
         ) {
-            val initial = shortcut.title.take(1).uppercase()
-            Text(
-                text = initial,
-                style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold),
-                color = PaliaCyan
+            val icon = when (shortcut.title.lowercase()) {
+                "google" -> Icons.Default.Search
+                "youtube" -> Icons.Default.PlayArrow
+                "facebook" -> Icons.Default.Public
+                "instagram" -> Icons.Default.PhotoCamera
+                "x", "twitter" -> Icons.Default.Public
+                "whatsapp" -> Icons.Default.Message
+                "amazon" -> Icons.Default.ShoppingCart
+                else -> Icons.Default.Public
+            }
+            Icon(
+                imageVector = icon,
+                contentDescription = shortcut.title,
+                tint = PaliaCyan,
+                modifier = Modifier.size(27.dp)
             )
         }
         Spacer(modifier = Modifier.height(6.dp))
