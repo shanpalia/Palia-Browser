@@ -109,70 +109,23 @@ fun BrowserWebView(
             }
 
             override fun shouldOverrideUrlLoading(view: WebView?, request: WebResourceRequest?): Boolean {
-                // Keep every normal web URL INSIDE Palia Browser.
-                // Returning false lets WebView handle http/https navigation itself.
                 val uri = request?.url ?: return false
-                val scheme = uri.scheme?.lowercase() ?: return false
+                val scheme = uri.scheme ?: return false
 
                 if (scheme == "http" || scheme == "https") {
                     return false
                 }
 
-                // Handle intent:// links without throwing the user into another browser.
-                if (scheme == "intent") {
-                    return try {
-                        val intent = Intent.parseUri(uri.toString(), Intent.URI_INTENT_SCHEME)
-                        val fallbackUrl = intent.getStringExtra("browser_fallback_url")
-                        if (!fallbackUrl.isNullOrBlank() &&
-                            (fallbackUrl.startsWith("http://") || fallbackUrl.startsWith("https://"))) {
-                            view?.loadUrl(fallbackUrl)
-                        } else {
-                            val launchIntent = intent.setComponent(null).setSelector(null)
-                            if (launchIntent.resolveActivity(context.packageManager) != null) {
-                                context.startActivity(launchIntent)
-                            }
-                        }
-                        true
-                    } catch (_: Exception) {
-                        true
+                // Handle intent, mailto, tel, etc.
+                try {
+                    val intent = Intent(Intent.ACTION_VIEW, uri).apply {
+                        addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
                     }
-                }
-
-                // Non-web schemes (tel:, mailto:, geo:, etc.) are intentionally opened
-                // only when the page explicitly requests them. Normal browsing never
-                // leaves Palia Browser.
-                return try {
-                    val intent = Intent(Intent.ACTION_VIEW, uri)
-                    if (intent.resolveActivity(context.packageManager) != null) {
-                        context.startActivity(intent)
-                    }
-                    true
+                    context.startActivity(intent)
+                    return true
                 } catch (_: Exception) {
-                    true
+                    return true
                 }
-            }
-
-            // Older Android/WebView versions may call the String overload.
-            @Suppress("DEPRECATION")
-            override fun shouldOverrideUrlLoading(view: WebView?, url: String?): Boolean {
-                val target = url ?: return false
-                if (target.startsWith("http://") || target.startsWith("https://")) {
-                    return false
-                }
-                if (target.startsWith("intent://")) {
-                    return try {
-                        val intent = Intent.parseUri(target, Intent.URI_INTENT_SCHEME)
-                        val fallbackUrl = intent.getStringExtra("browser_fallback_url")
-                        if (!fallbackUrl.isNullOrBlank() &&
-                            (fallbackUrl.startsWith("http://") || fallbackUrl.startsWith("https://"))) {
-                            view?.loadUrl(fallbackUrl)
-                        }
-                        true
-                    } catch (_: Exception) {
-                        true
-                    }
-                }
-                return true
             }
         }
 
