@@ -14,6 +14,7 @@ import com.example.download.utils.FileUtils
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
+import kotlinx.coroutines.CoroutineStart
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.launch
 import java.io.File
@@ -192,7 +193,7 @@ class PaliaDownloadManager private constructor(private val context: Context) {
         val engine = DownloadEngine()
         activeEngines[item.id] = engine
 
-        val job = scope.launch {
+        val job = scope.launch(start = CoroutineStart.LAZY) {
             engine.executeDownload(
                 item = item,
                 onProgress = { downloaded, total, speed, etaSeconds, isResumable ->
@@ -235,6 +236,7 @@ class PaliaDownloadManager private constructor(private val context: Context) {
             )
         }
         activeJobs[item.id] = job
+        job.start()
     }
 
     private fun checkServiceState() {
