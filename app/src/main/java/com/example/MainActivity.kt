@@ -84,6 +84,9 @@ class MainActivity : ComponentActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        // The launcher Activity uses the splash theme only for the system launch window.
+        // Switch to the regular app theme before composing the browser UI.
+        setTheme(com.shanpalia.paliabrowser.R.style.Theme_MyApplication)
         enableEdgeToEdge()
 
         handleIntent(intent)
