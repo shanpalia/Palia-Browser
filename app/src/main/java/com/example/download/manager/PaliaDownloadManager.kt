@@ -95,15 +95,17 @@ class PaliaDownloadManager private constructor(private val context: Context) {
     }
 
     fun pauseDownload(id: Long) {
-        activeEngines[id]?.pause()
-        activeJobs[id]?.cancel()
-        activeEngines.remove(id)
-        activeJobs.remove(id)
-
-        scope.launch {
-            downloadDao.updateStatus(id, DownloadStatus.PAUSED)
-            checkServiceState()
-            triggerDownloadQueue()
+        // Let the engine finish its current read/write cycle and persist the partial file.
+        // Cancelling the coroutine here can cancel the Room update that records PAUSED,
+        // leaving the row stuck in DOWNLOADING and making Resume unreliable.
+        val engine = activeEngines[id]
+        if (engine != null) {
+            engine.pause()
+        } else {
+            scope.launch {
+                downloadDao.updateStatus(id, DownloadStatus.PAUSED)
+                triggerDownloadQueue()
+            }
         }
     }
 
@@ -116,15 +118,18 @@ class PaliaDownloadManager private constructor(private val context: Context) {
     }
 
     fun cancelDownload(id: Long) {
-        activeEngines[id]?.cancel()
-        activeJobs[id]?.cancel()
-        activeEngines.remove(id)
-        activeJobs.remove(id)
+        val engine = activeEngines[id]
+        if (engine != null) {
+            // The engine observes this flag and performs cleanup on its own coroutine.
+            engine.cancel()
+            return
+        }
 
+        // Waiting downloads have no active engine, so they can be cancelled directly.
         scope.launch {
             val item = downloadDao.getDownloadByIdSync(id)
             if (item != null) {
-                File(item.localFilePath).delete()
+                try { File(item.localFilePath).delete() } catch (_: Exception) {}
             }
             downloadDao.updateStatus(id, DownloadStatus.CANCELLED)
             checkServiceState()
