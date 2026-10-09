@@ -225,9 +225,12 @@ class PaliaDownloadManager private constructor(private val context: Context) {
                     activeEngines.remove(item.id)
                     activeJobs.remove(item.id)
 
-                    if (status == DownloadStatus.COMPLETED && settingsRepo.settings.value.showDownloadNotifications) {
+                    if (status == DownloadStatus.COMPLETED) {
                         val finishedItem = downloadDao.getDownloadByIdSync(item.id) ?: item
-                        notificationHelper.showCompletionNotification(finishedItem)
+                        publishToPublicDownloads(finishedItem)
+                        if (settingsRepo.settings.value.showDownloadNotifications) {
+                            notificationHelper.showCompletionNotification(finishedItem)
+                        }
                     }
 
                     checkServiceState()
@@ -237,6 +240,51 @@ class PaliaDownloadManager private constructor(private val context: Context) {
         }
         activeJobs[item.id] = job
         job.start()
+    }
+
+    /**
+     * Publish the finished file to the user's Downloads folder on Android 10+.
+     * The app keeps its working copy so pause/resume and in-app Open/Share remain reliable.
+     */
+    private fun publishToPublicDownloads(item: DownloadItem) {
+        if (android.os.Build.VERSION.SDK_INT < android.os.Build.VERSION_CODES.Q) return
+        val source = File(item.localFilePath)
+        if (!source.isFile || source.length() == 0L) return
+
+        val resolver = context.contentResolver
+        val relativePath = Environment.DIRECTORY_DOWNLOADS + "/Palia Browser"
+        val existing = resolver.query(
+            android.provider.MediaStore.Downloads.EXTERNAL_CONTENT_URI,
+            arrayOf(android.provider.MediaStore.Downloads._ID),
+            "${android.provider.MediaStore.Downloads.DISPLAY_NAME}=? AND ${android.provider.MediaStore.Downloads.RELATIVE_PATH}=?",
+            arrayOf(item.fileName, relativePath),
+            null
+        )
+        existing?.use { cursor ->
+            if (cursor.moveToFirst()) return
+        }
+
+        val values = android.content.ContentValues().apply {
+            put(android.provider.MediaStore.Downloads.DISPLAY_NAME, item.fileName)
+            put(android.provider.MediaStore.Downloads.MIME_TYPE, item.mimeType.ifBlank { "application/octet-stream" })
+            put(android.provider.MediaStore.Downloads.RELATIVE_PATH, relativePath)
+            put(android.provider.MediaStore.Downloads.IS_PENDING, 1)
+        }
+
+        val uri = resolver.insert(android.provider.MediaStore.Downloads.EXTERNAL_CONTENT_URI, values)
+            ?: return
+        try {
+            resolver.openOutputStream(uri, "w")?.use { output ->
+                source.inputStream().use { input -> input.copyTo(output) }
+            } ?: throw java.io.IOException("Could not open Downloads output stream")
+            val publishValues = android.content.ContentValues().apply {
+                put(android.provider.MediaStore.Downloads.IS_PENDING, 0)
+            }
+            resolver.update(uri, publishValues, null, null)
+        } catch (e: Exception) {
+            resolver.delete(uri, null, null)
+            throw e
+        }
     }
 
     private fun checkServiceState() {
