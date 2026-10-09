@@ -27,6 +27,7 @@ import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.isActive
 
 enum class MainNavigationTab {
     HOME,
@@ -71,6 +72,16 @@ class BrowserViewModel(application: Application) : AndroidViewModel(application)
     private val _newsLoading = MutableStateFlow(false)
     val newsLoading: StateFlow<Boolean> = _newsLoading.asStateFlow()
     private var newsRefreshJob: kotlinx.coroutines.Job? = null
+
+    init {
+        // Fetch genuine RSS headlines on startup and refresh periodically while the app is open.
+        viewModelScope.launch {
+            while (kotlinx.coroutines.currentCoroutineContext().isActive) {
+                refreshNews()
+                kotlinx.coroutines.delay(15 * 60 * 1000L)
+            }
+        }
+    }
 
     val settings: StateFlow<UserSettings> = settingsRepo.settings
     val bookmarks: StateFlow<List<BookmarkItem>> = browserRepo.bookmarks.stateIn(
