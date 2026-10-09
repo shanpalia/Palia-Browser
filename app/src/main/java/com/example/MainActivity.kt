@@ -134,7 +134,7 @@ private fun PaliaBrowserSplash() {
             verticalArrangement = Arrangement.Center
         ) {
             Image(
-                painter = painterResource(id = com.shanpalia.paliabrowser.R.drawable.palia_browser_icon),
+                painter = painterResource(id = com.shanpalia.paliabrowser.R.drawable.ic_launcher_foreground),
                 contentDescription = "Palia Browser",
                 modifier = Modifier.size(150.dp)
             )
