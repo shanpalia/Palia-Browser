@@ -281,9 +281,9 @@ class PaliaDownloadManager private constructor(private val context: Context) {
                 put(android.provider.MediaStore.Downloads.IS_PENDING, 0)
             }
             resolver.update(uri, publishValues, null, null)
-        } catch (e: Exception) {
+        } catch (_: Exception) {
+            // Keep the completed in-app download valid even if public publishing is unavailable.
             resolver.delete(uri, null, null)
-            throw e
         }
     }
 
