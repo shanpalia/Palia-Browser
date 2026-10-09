@@ -153,8 +153,14 @@ private fun PaliaBrowserSplash() {
             )
             Spacer(modifier = Modifier.height(28.dp))
             Text(
-                text = "© Shanpalia",
-                style = MaterialTheme.typography.labelMedium,
+                text = "By PaliaAPK HUB",
+                style = MaterialTheme.typography.labelMedium.copy(fontWeight = FontWeight.SemiBold),
+                color = Color(0xFF64748B)
+            )
+            Spacer(modifier = Modifier.height(5.dp))
+            Text(
+                text = "Developer by shanpalia",
+                style = MaterialTheme.typography.labelSmall,
                 color = Color(0xFF94A3B8)
             )
         }
