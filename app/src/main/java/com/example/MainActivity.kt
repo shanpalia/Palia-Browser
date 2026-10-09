@@ -137,7 +137,7 @@ private fun PaliaBrowserSplash() {
             verticalArrangement = Arrangement.Center
         ) {
             Image(
-                painter = painterResource(id = com.shanpalia.paliabrowser.R.drawable.ic_launcher_foreground),
+                painter = painterResource(id = com.shanpalia.paliabrowser.R.drawable.palia_browser_icon),
                 contentDescription = "Palia Browser",
                 modifier = Modifier.size(150.dp)
             )
@@ -150,7 +150,7 @@ private fun PaliaBrowserSplash() {
             )
             Spacer(modifier = Modifier.height(6.dp))
             Text(
-                text = "Fast • Safe • Download",
+                text = "Fast · Secure · Smart Browsing",
                 style = MaterialTheme.typography.bodyMedium,
                 color = Color(0xFF64748B)
             )
