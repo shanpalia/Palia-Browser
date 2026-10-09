@@ -119,13 +119,13 @@ class BrowserViewModel(application: Application) : AndroidViewModel(application)
     val activeTab: BrowserTab?
         get() = _tabs.value.find { it.id == _activeTabId.value }
 
-    fun refreshNews() {
+    fun refreshNews(source: String = "All News") {
         newsRefreshJob?.cancel()
         val language = settings.value.newsLanguage
         newsRefreshJob = viewModelScope.launch {
             _newsLoading.value = true
             try {
-                val freshNews = newsRepository.fetch(language)
+                val freshNews = newsRepository.fetch(language, source)
                 if (freshNews.isNotEmpty()) {
                     _news.value = freshNews
                 }
