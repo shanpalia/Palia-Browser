@@ -130,7 +130,7 @@ fun HomeScreen(
                     contentAlignment = Alignment.Center
                 ) {
                     Image(
-                        painter = painterResource(id = R.drawable.img_palia_logo),
+                        painter = painterResource(id = R.drawable.ic_launcher_foreground),
                         contentDescription = "Palia Browser Logo",
                         modifier = Modifier
                             .size(68.dp)
