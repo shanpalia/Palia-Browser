@@ -17,7 +17,7 @@ data class NewsArticle(
 )
 
 class NewsRepository {
-    suspend fun fetch(language: String): List<NewsArticle> = withContext(Dispatchers.IO) {
+    suspend fun fetch(language: String, sourceFilter: String = "All News"): List<NewsArticle> = withContext(Dispatchers.IO) {
         val (hl, gl, ceid) = when (language) {
             "Hindi" -> Triple("hi", "IN", "IN:hi")
             "Bengali" -> Triple("bn", "IN", "IN:bn")
@@ -30,7 +30,17 @@ class NewsRepository {
             "Punjabi" -> Triple("pa", "IN", "IN:pa")
             else -> Triple("en", "IN", "IN:en")
         }
-        val url = "https://news.google.com/rss?hl=$hl&gl=$gl&ceid=${Uri.encode(ceid)}"
+        val sourceQuery = when (sourceFilter) {
+            "Amar Ujala" -> "site:amarujala.com"
+            "Dainik Jagran" -> "site:jagran.com"
+            "Aaj Tak" -> "site:aajtak.in"
+            "NDTV" -> "site:ndtv.com"
+            "India Today" -> "site:indiatoday.in"
+            "BBC News" -> "site:bbc.com"
+            else -> ""
+        }
+        val query = if (sourceQuery.isBlank()) "" else "&q=" + Uri.encode(sourceQuery)
+        val url = "https://news.google.com/rss?hl=" + hl + "&gl=" + gl + "&ceid=" + Uri.encode(ceid) + query
         val connection = (URL(url).openConnection() as HttpURLConnection).apply {
             connectTimeout = 10000
             readTimeout = 10000

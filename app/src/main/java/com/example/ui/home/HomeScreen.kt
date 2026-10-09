@@ -44,6 +44,8 @@ import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.DropdownMenu
+import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.LinearProgressIndicator
@@ -99,6 +101,9 @@ fun HomeScreen(
 
     var searchQuery by remember { mutableStateOf("") }
     var showAddShortcutDialog by remember { mutableStateOf(false) }
+    var selectedNewsSource by remember { mutableStateOf("All News") }
+    var showNewsSourceMenu by remember { mutableStateOf(false) }
+    var showNewsLanguageMenu by remember { mutableStateOf(false) }
 
     LaunchedEffect(settings.newsLanguage) { viewModel.refreshNews() }
 
@@ -130,7 +135,7 @@ fun HomeScreen(
                     contentAlignment = Alignment.Center
                 ) {
                     Image(
-                        painter = painterResource(id = R.drawable.img_palia_logo),
+                        painter = painterResource(id = R.drawable.ic_launcher_foreground),
                         contentDescription = "Palia Browser Logo",
                         modifier = Modifier
                             .size(68.dp)
@@ -152,6 +157,17 @@ fun HomeScreen(
                 Text(
                     text = "Fast • Secure • Resumable Downloads",
                     style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+                Spacer(modifier = Modifier.height(4.dp))
+                Text(
+                    text = "By PaliaAPK HUB",
+                    style = MaterialTheme.typography.labelMedium.copy(fontWeight = FontWeight.SemiBold),
+                    color = PaliaCyan
+                )
+                Text(
+                    text = "Developer by shanpalia",
+                    style = MaterialTheme.typography.labelSmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
             }
@@ -344,7 +360,36 @@ fun HomeScreen(
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
                 }
-                IconButton(onClick = { viewModel.refreshNews() }) {
+                Box {
+                    TextButton(onClick = { showNewsSourceMenu = true }) {
+                        Text(selectedNewsSource, maxLines = 1, overflow = TextOverflow.Ellipsis)
+                    }
+                    DropdownMenu(expanded = showNewsSourceMenu, onDismissRequest = { showNewsSourceMenu = false }) {
+                        listOf("All News", "Amar Ujala", "Dainik Jagran", "Aaj Tak", "NDTV", "India Today", "BBC News").forEach { source ->
+                            DropdownMenuItem(text = { Text(source) }, onClick = {
+                                selectedNewsSource = source
+                                showNewsSourceMenu = false
+                                viewModel.refreshNews(source)
+                            })
+                        }
+                    }
+                }
+                Box {
+                    TextButton(onClick = { showNewsLanguageMenu = true }) {
+                        Icon(Icons.Default.Language, contentDescription = "News language")
+                        Text(settings.newsLanguage)
+                    }
+                    DropdownMenu(expanded = showNewsLanguageMenu, onDismissRequest = { showNewsLanguageMenu = false }) {
+                        listOf("Hindi", "English", "Bengali", "Telugu", "Tamil", "Marathi", "Gujarati", "Kannada", "Malayalam", "Punjabi").forEach { language ->
+                            DropdownMenuItem(text = { Text(language) }, onClick = {
+                                showNewsLanguageMenu = false
+                                viewModel.setNewsLanguage(language)
+                                viewModel.refreshNews(selectedNewsSource)
+                            })
+                        }
+                    }
+                }
+                IconButton(onClick = { viewModel.refreshNews(selectedNewsSource) }) {
                     Icon(Icons.Default.Refresh, contentDescription = "Refresh news", tint = PaliaCyan)
                 }
             }

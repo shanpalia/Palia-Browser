@@ -27,6 +27,7 @@ import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.isActive
 
 enum class MainNavigationTab {
     HOME,
@@ -72,6 +73,16 @@ class BrowserViewModel(application: Application) : AndroidViewModel(application)
     val newsLoading: StateFlow<Boolean> = _newsLoading.asStateFlow()
     private var newsRefreshJob: kotlinx.coroutines.Job? = null
 
+    init {
+        // Fetch genuine RSS headlines on startup and refresh periodically while the app is open.
+        viewModelScope.launch {
+            while (kotlinx.coroutines.currentCoroutineContext().isActive) {
+                refreshNews()
+                kotlinx.coroutines.delay(15 * 60 * 1000L)
+            }
+        }
+    }
+
     val settings: StateFlow<UserSettings> = settingsRepo.settings
     val bookmarks: StateFlow<List<BookmarkItem>> = browserRepo.bookmarks.stateIn(
         viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList()
@@ -108,13 +119,13 @@ class BrowserViewModel(application: Application) : AndroidViewModel(application)
     val activeTab: BrowserTab?
         get() = _tabs.value.find { it.id == _activeTabId.value }
 
-    fun refreshNews() {
+    fun refreshNews(source: String = "All News") {
         newsRefreshJob?.cancel()
         val language = settings.value.newsLanguage
         newsRefreshJob = viewModelScope.launch {
             _newsLoading.value = true
             try {
-                val freshNews = newsRepository.fetch(language)
+                val freshNews = newsRepository.fetch(language, source)
                 if (freshNews.isNotEmpty()) {
                     _news.value = freshNews
                 }

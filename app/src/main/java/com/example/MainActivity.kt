@@ -84,6 +84,9 @@ class MainActivity : ComponentActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        // The launcher Activity uses the splash theme only for the system launch window.
+        // Switch to the regular app theme before composing the browser UI.
+        setTheme(com.shanpalia.paliabrowser.R.style.Theme_MyApplication)
         enableEdgeToEdge()
 
         handleIntent(intent)
@@ -147,14 +150,20 @@ private fun PaliaBrowserSplash() {
             )
             Spacer(modifier = Modifier.height(6.dp))
             Text(
-                text = "Fast • Safe • Download",
+                text = "Fast · Secure · Smart Browsing",
                 style = MaterialTheme.typography.bodyMedium,
                 color = Color(0xFF64748B)
             )
             Spacer(modifier = Modifier.height(28.dp))
             Text(
-                text = "© Shanpalia",
-                style = MaterialTheme.typography.labelMedium,
+                text = "By PaliaAPK HUB",
+                style = MaterialTheme.typography.labelMedium.copy(fontWeight = FontWeight.SemiBold),
+                color = Color(0xFF64748B)
+            )
+            Spacer(modifier = Modifier.height(5.dp))
+            Text(
+                text = "Developer by shanpalia",
+                style = MaterialTheme.typography.labelSmall,
                 color = Color(0xFF94A3B8)
             )
         }

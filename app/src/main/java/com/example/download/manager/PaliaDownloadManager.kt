@@ -14,6 +14,7 @@ import com.example.download.utils.FileUtils
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
+import kotlinx.coroutines.CoroutineStart
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.launch
 import java.io.File
@@ -95,15 +96,17 @@ class PaliaDownloadManager private constructor(private val context: Context) {
     }
 
     fun pauseDownload(id: Long) {
-        activeEngines[id]?.pause()
-        activeJobs[id]?.cancel()
-        activeEngines.remove(id)
-        activeJobs.remove(id)
-
-        scope.launch {
-            downloadDao.updateStatus(id, DownloadStatus.PAUSED)
-            checkServiceState()
-            triggerDownloadQueue()
+        // Let the engine finish its current read/write cycle and persist the partial file.
+        // Cancelling the coroutine here can cancel the Room update that records PAUSED,
+        // leaving the row stuck in DOWNLOADING and making Resume unreliable.
+        val engine = activeEngines[id]
+        if (engine != null) {
+            engine.pause()
+        } else {
+            scope.launch {
+                downloadDao.updateStatus(id, DownloadStatus.PAUSED)
+                triggerDownloadQueue()
+            }
         }
     }
 
@@ -116,15 +119,18 @@ class PaliaDownloadManager private constructor(private val context: Context) {
     }
 
     fun cancelDownload(id: Long) {
-        activeEngines[id]?.cancel()
-        activeJobs[id]?.cancel()
-        activeEngines.remove(id)
-        activeJobs.remove(id)
+        val engine = activeEngines[id]
+        if (engine != null) {
+            // The engine observes this flag and performs cleanup on its own coroutine.
+            engine.cancel()
+            return
+        }
 
+        // Waiting downloads have no active engine, so they can be cancelled directly.
         scope.launch {
             val item = downloadDao.getDownloadByIdSync(id)
             if (item != null) {
-                File(item.localFilePath).delete()
+                try { File(item.localFilePath).delete() } catch (_: Exception) {}
             }
             downloadDao.updateStatus(id, DownloadStatus.CANCELLED)
             checkServiceState()
@@ -187,7 +193,7 @@ class PaliaDownloadManager private constructor(private val context: Context) {
         val engine = DownloadEngine()
         activeEngines[item.id] = engine
 
-        val job = scope.launch {
+        val job = scope.launch(start = CoroutineStart.LAZY) {
             engine.executeDownload(
                 item = item,
                 onProgress = { downloaded, total, speed, etaSeconds, isResumable ->
@@ -219,9 +225,12 @@ class PaliaDownloadManager private constructor(private val context: Context) {
                     activeEngines.remove(item.id)
                     activeJobs.remove(item.id)
 
-                    if (status == DownloadStatus.COMPLETED && settingsRepo.settings.value.showDownloadNotifications) {
+                    if (status == DownloadStatus.COMPLETED) {
                         val finishedItem = downloadDao.getDownloadByIdSync(item.id) ?: item
-                        notificationHelper.showCompletionNotification(finishedItem)
+                        publishToPublicDownloads(finishedItem)
+                        if (settingsRepo.settings.value.showDownloadNotifications) {
+                            notificationHelper.showCompletionNotification(finishedItem)
+                        }
                     }
 
                     checkServiceState()
@@ -230,6 +239,52 @@ class PaliaDownloadManager private constructor(private val context: Context) {
             )
         }
         activeJobs[item.id] = job
+        job.start()
+    }
+
+    /**
+     * Publish the finished file to the user's Downloads folder on Android 10+.
+     * The app keeps its working copy so pause/resume and in-app Open/Share remain reliable.
+     */
+    private fun publishToPublicDownloads(item: DownloadItem) {
+        if (android.os.Build.VERSION.SDK_INT < android.os.Build.VERSION_CODES.Q) return
+        val source = File(item.localFilePath)
+        if (!source.isFile || source.length() == 0L) return
+
+        val resolver = context.contentResolver
+        val relativePath = Environment.DIRECTORY_DOWNLOADS + "/Palia Browser"
+        val existing = resolver.query(
+            android.provider.MediaStore.Downloads.EXTERNAL_CONTENT_URI,
+            arrayOf(android.provider.MediaStore.Downloads._ID),
+            "${android.provider.MediaStore.Downloads.DISPLAY_NAME}=? AND ${android.provider.MediaStore.Downloads.RELATIVE_PATH}=?",
+            arrayOf(item.fileName, relativePath),
+            null
+        )
+        existing?.use { cursor ->
+            if (cursor.moveToFirst()) return
+        }
+
+        val values = android.content.ContentValues().apply {
+            put(android.provider.MediaStore.Downloads.DISPLAY_NAME, item.fileName)
+            put(android.provider.MediaStore.Downloads.MIME_TYPE, item.mimeType.ifBlank { "application/octet-stream" })
+            put(android.provider.MediaStore.Downloads.RELATIVE_PATH, relativePath)
+            put(android.provider.MediaStore.Downloads.IS_PENDING, 1)
+        }
+
+        val uri = resolver.insert(android.provider.MediaStore.Downloads.EXTERNAL_CONTENT_URI, values)
+            ?: return
+        try {
+            resolver.openOutputStream(uri, "w")?.use { output ->
+                source.inputStream().use { input -> input.copyTo(output) }
+            } ?: throw java.io.IOException("Could not open Downloads output stream")
+            val publishValues = android.content.ContentValues().apply {
+                put(android.provider.MediaStore.Downloads.IS_PENDING, 0)
+            }
+            resolver.update(uri, publishValues, null, null)
+        } catch (_: Exception) {
+            // Keep the completed in-app download valid even if public publishing is unavailable.
+            resolver.delete(uri, null, null)
+        }
     }
 
     private fun checkServiceState() {
