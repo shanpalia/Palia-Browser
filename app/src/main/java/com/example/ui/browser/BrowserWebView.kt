@@ -6,6 +6,7 @@ import android.content.pm.PackageManager
 import android.content.Intent
 import android.graphics.Bitmap
 import android.net.Uri
+import android.net.http.SslError
 import android.view.ViewGroup
 import android.webkit.CookieManager
 import android.webkit.DownloadListener
@@ -13,6 +14,7 @@ import android.webkit.GeolocationPermissions
 import android.webkit.PermissionRequest
 import android.webkit.WebChromeClient
 import android.webkit.WebResourceRequest
+import android.webkit.SslErrorHandler
 import android.webkit.WebSettings
 import android.webkit.WebView
 import android.webkit.WebViewClient
@@ -120,7 +122,10 @@ fun BrowserWebView(
                 javaScriptCanOpenWindowsAutomatically = false
                 setSupportMultipleWindows(false)
                 cacheMode = WebSettings.LOAD_DEFAULT
+                safeBrowsingEnabled = true
             }
+
+            CookieManager.getInstance().setAcceptThirdPartyCookies(this, true)
 
             setDownloadListener { url, userAgent, contentDisposition, mimetype, contentLength ->
                 viewModel.onDownloadDetected(url, contentDisposition, mimetype, contentLength)
@@ -175,6 +180,15 @@ fun BrowserWebView(
                     canGoBack = view?.canGoBack(),
                     canGoForward = view?.canGoForward()
                 )
+            }
+
+            override fun onReceivedSslError(
+                view: WebView?,
+                handler: SslErrorHandler?,
+                error: SslError?
+            ) {
+                // Never let users bypass invalid certificates.
+                handler?.cancel()
             }
 
             override fun shouldOverrideUrlLoading(view: WebView?, request: WebResourceRequest?): Boolean {
