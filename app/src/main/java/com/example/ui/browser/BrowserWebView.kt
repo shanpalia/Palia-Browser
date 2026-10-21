@@ -1,12 +1,16 @@
 package com.example.ui.browser
 
+import android.Manifest
 import android.annotation.SuppressLint
+import android.content.pm.PackageManager
 import android.content.Intent
 import android.graphics.Bitmap
 import android.net.Uri
 import android.view.ViewGroup
 import android.webkit.CookieManager
 import android.webkit.DownloadListener
+import android.webkit.GeolocationPermissions
+import android.webkit.PermissionRequest
 import android.webkit.WebChromeClient
 import android.webkit.WebResourceRequest
 import android.webkit.WebSettings
@@ -17,9 +21,15 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.setValue
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.viewinterop.AndroidView
+import androidx.core.content.ContextCompat
 import com.example.browser.model.BrowserTab
 import com.example.ui.BrowserViewModel
 import com.example.ui.WebCommand
@@ -33,6 +43,52 @@ fun BrowserWebView(
     modifier: Modifier = Modifier
 ) {
     val context = LocalContext.current
+    var pendingWebPermissionRequest by remember { mutableStateOf<PermissionRequest?>(null) }
+    var pendingGeoOrigin by remember { mutableStateOf<String?>(null) }
+    var pendingGeoCallback by remember { mutableStateOf<GeolocationPermissions.Callback?>(null) }
+
+    val webPermissionLauncher = rememberLauncherForActivityResult(
+        ActivityResultContracts.RequestMultiplePermissions()
+    ) { results ->
+        val request = pendingWebPermissionRequest
+        pendingWebPermissionRequest = null
+        if (request != null) {
+            val requestedResources = request.resources.toSet()
+            val requiredPermissions = buildList {
+                if (PermissionRequest.RESOURCE_VIDEO_CAPTURE in requestedResources) add(Manifest.permission.CAMERA)
+                if (PermissionRequest.RESOURCE_AUDIO_CAPTURE in requestedResources) add(Manifest.permission.RECORD_AUDIO)
+            }
+            if (requiredPermissions.isNotEmpty() && requiredPermissions.all { permission ->
+                    results[permission] == true ||
+                        ContextCompat.checkSelfPermission(context, permission) == PackageManager.PERMISSION_GRANTED
+                }) {
+                val grantedResources = request.resources.filter { resource ->
+                    resource == PermissionRequest.RESOURCE_VIDEO_CAPTURE ||
+                        resource == PermissionRequest.RESOURCE_AUDIO_CAPTURE
+                }
+                if (grantedResources.isNotEmpty()) request.grant(grantedResources.toTypedArray()) else request.deny()
+            } else {
+                request.deny()
+            }
+        }
+    }
+
+    val locationPermissionLauncher = rememberLauncherForActivityResult(
+        ActivityResultContracts.RequestMultiplePermissions()
+    ) { results ->
+        val origin = pendingGeoOrigin
+        val callback = pendingGeoCallback
+        pendingGeoOrigin = null
+        pendingGeoCallback = null
+        if (origin != null && callback != null) {
+            val hasLocation = results[Manifest.permission.ACCESS_FINE_LOCATION] == true ||
+                results[Manifest.permission.ACCESS_COARSE_LOCATION] == true ||
+                ContextCompat.checkSelfPermission(context, Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED ||
+                ContextCompat.checkSelfPermission(context, Manifest.permission.ACCESS_COARSE_LOCATION) == PackageManager.PERMISSION_GRANTED
+            callback.invoke(origin, hasLocation, false)
+        }
+    }
+
     val webView = remember(tab.id) {
         WebView(context).apply {
             layoutParams = ViewGroup.LayoutParams(
@@ -142,6 +198,58 @@ fun BrowserWebView(
                 super.onReceivedTitle(view, title)
                 title?.let {
                     viewModel.updateActiveTabState(title = it)
+                }
+            }
+
+            override fun onPermissionRequest(request: PermissionRequest?) {
+                if (request == null || request.origin?.scheme != "https") {
+                    request?.deny()
+                    return
+                }
+                val resources = request.resources.toSet()
+                val requiredPermissions = buildList {
+                    if (PermissionRequest.RESOURCE_VIDEO_CAPTURE in resources) add(Manifest.permission.CAMERA)
+                    if (PermissionRequest.RESOURCE_AUDIO_CAPTURE in resources) add(Manifest.permission.RECORD_AUDIO)
+                }
+                val supportedResources = request.resources.filter {
+                    it == PermissionRequest.RESOURCE_VIDEO_CAPTURE ||
+                        it == PermissionRequest.RESOURCE_AUDIO_CAPTURE
+                }
+                if (requiredPermissions.isEmpty() || supportedResources.isEmpty()) {
+                    request.deny()
+                    return
+                }
+                val missingPermissions = requiredPermissions.filter { permission ->
+                    ContextCompat.checkSelfPermission(context, permission) != PackageManager.PERMISSION_GRANTED
+                }
+                if (missingPermissions.isEmpty()) {
+                    request.grant(supportedResources.toTypedArray())
+                } else {
+                    pendingWebPermissionRequest?.deny()
+                    pendingWebPermissionRequest = request
+                    webPermissionLauncher.launch(missingPermissions.toTypedArray())
+                }
+            }
+
+            override fun onGeolocationPermissionsShowPrompt(
+                origin: String?,
+                callback: GeolocationPermissions.Callback?
+            ) {
+                if (origin.isNullOrBlank() || callback == null || !origin.startsWith("https://", ignoreCase = true)) {
+                    callback?.invoke(origin ?: "", false, false)
+                    return
+                }
+                val hasLocation = ContextCompat.checkSelfPermission(context, Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED ||
+                    ContextCompat.checkSelfPermission(context, Manifest.permission.ACCESS_COARSE_LOCATION) == PackageManager.PERMISSION_GRANTED
+                if (hasLocation) {
+                    callback.invoke(origin, true, false)
+                } else {
+                    pendingGeoOrigin = origin
+                    pendingGeoCallback = callback
+                    locationPermissionLauncher.launch(arrayOf(
+                        Manifest.permission.ACCESS_FINE_LOCATION,
+                        Manifest.permission.ACCESS_COARSE_LOCATION
+                    ))
                 }
             }
         }
