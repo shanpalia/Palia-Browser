@@ -15,6 +15,7 @@ import android.webkit.GeolocationPermissions
 import android.webkit.PermissionRequest
 import android.webkit.WebChromeClient
 import android.webkit.WebResourceRequest
+import android.webkit.WebResourceResponse
 import android.webkit.SslErrorHandler
 import android.webkit.WebSettings
 import android.webkit.WebView
@@ -38,6 +39,23 @@ import com.example.browser.model.BrowserTab
 import com.example.ui.BrowserViewModel
 import com.example.ui.WebCommand
 import kotlinx.coroutines.flow.collectLatest
+
+private val adAndTrackerHosts = setOf(
+    "doubleclick.net",
+    "googlesyndication.com",
+    "googleadservices.com",
+    "adnxs.com",
+    "taboola.com",
+    "outbrain.com",
+    "criteo.com",
+    "adform.net"
+)
+
+private fun isBlockedAdHost(host: String?): Boolean {
+    if (host.isNullOrBlank()) return false
+    val normalized = host.lowercase()
+    return adAndTrackerHosts.any { normalized == it || normalized.endsWith(".$it") }
+}
 
 @SuppressLint("SetJavaScriptEnabled")
 @Composable
@@ -160,6 +178,23 @@ fun BrowserWebView(
     // Connect WebViewClient and WebChromeClient
     DisposableEffect(tab.id) {
         webView.webViewClient = object : WebViewClient() {
+            override fun shouldInterceptRequest(
+                view: WebView?,
+                request: WebResourceRequest?
+            ): WebResourceResponse? {
+                if (isBlockedAdHost(request?.url?.host)) {
+                    return WebResourceResponse(
+                        "text/plain",
+                        "utf-8",
+                        204,
+                        "No Content",
+                        emptyMap(),
+                        java.io.ByteArrayInputStream(ByteArray(0))
+                    )
+                }
+                return super.shouldInterceptRequest(view, request)
+            }
+
             override fun onPageStarted(view: WebView?, url: String?, favicon: Bitmap?) {
                 super.onPageStarted(view, url, favicon)
                 url?.let {
