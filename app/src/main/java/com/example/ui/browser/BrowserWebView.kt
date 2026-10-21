@@ -16,6 +16,7 @@ import android.webkit.WebResourceRequest
 import android.webkit.WebSettings
 import android.webkit.WebView
 import android.webkit.WebViewClient
+import android.webkit.ValueCallback
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
@@ -46,6 +47,14 @@ fun BrowserWebView(
     var pendingWebPermissionRequest by remember { mutableStateOf<PermissionRequest?>(null) }
     var pendingGeoOrigin by remember { mutableStateOf<String?>(null) }
     var pendingGeoCallback by remember { mutableStateOf<GeolocationPermissions.Callback?>(null) }
+    var pendingFileChooser by remember { mutableStateOf<ValueCallback<Array<Uri>>?>(null) }
+
+    val fileChooserLauncher = rememberLauncherForActivityResult(
+        ActivityResultContracts.OpenMultipleDocuments()
+    ) { uris ->
+        pendingFileChooser?.onReceiveValue(uris.takeIf { it.isNotEmpty() }?.toTypedArray())
+        pendingFileChooser = null
+    }
 
     val webPermissionLauncher = rememberLauncherForActivityResult(
         ActivityResultContracts.RequestMultiplePermissions()
@@ -105,7 +114,11 @@ fun BrowserWebView(
                 displayZoomControls = false
                 useWideViewPort = true
                 loadWithOverviewMode = true
-                mixedContentMode = WebSettings.MIXED_CONTENT_ALWAYS_ALLOW
+                mixedContentMode = WebSettings.MIXED_CONTENT_NEVER_ALLOW
+                allowFileAccess = false
+                allowContentAccess = true
+                javaScriptCanOpenWindowsAutomatically = false
+                setSupportMultipleWindows(false)
                 cacheMode = WebSettings.LOAD_DEFAULT
             }
 
@@ -186,6 +199,28 @@ fun BrowserWebView(
         }
 
         webView.webChromeClient = object : WebChromeClient() {
+            override fun onShowFileChooser(
+                webView: WebView?,
+                filePathCallback: ValueCallback<Array<Uri>>?,
+                fileChooserParams: FileChooserParams?
+            ): Boolean {
+                if (filePathCallback == null) return false
+                pendingFileChooser?.onReceiveValue(null)
+                pendingFileChooser = filePathCallback
+                val acceptedTypes = fileChooserParams?.acceptTypes
+                    ?.filter { it.isNotBlank() && it != "*/*" }
+                    ?.toTypedArray()
+                    ?.takeIf { it.isNotEmpty() } ?: arrayOf("*/*")
+                return try {
+                    fileChooserLauncher.launch(acceptedTypes)
+                    true
+                } catch (_: Exception) {
+                    pendingFileChooser?.onReceiveValue(null)
+                    pendingFileChooser = null
+                    false
+                }
+            }
+
             override fun onProgressChanged(view: WebView?, newProgress: Int) {
                 super.onProgressChanged(view, newProgress)
                 viewModel.updateActiveTabState(
@@ -256,6 +291,8 @@ fun BrowserWebView(
 
         onDispose {
             webView.stopLoading()
+            pendingFileChooser?.onReceiveValue(null)
+            pendingFileChooser = null
         }
     }
 
