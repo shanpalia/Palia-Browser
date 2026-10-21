@@ -123,7 +123,7 @@ fun HomeScreen(
                 horizontalArrangement = Arrangement.Start
             ) {
                 Image(
-                    painter = painterResource(id = R.drawable.palia_browser_icon),
+                    painter = painterResource(id = R.drawable.ic_launcher_foreground),
                     contentDescription = "Palia Browser",
                     modifier = Modifier.size(48.dp).clip(RoundedCornerShape(15.dp))
                 )
@@ -259,34 +259,6 @@ fun HomeScreen(
                     modifier = Modifier.weight(1f),
                     onClick = { viewModel.navigateTo(MainNavigationTab.SETTINGS) }
                 )
-            }
-        }
-
-        // Palia ecosystem and social shortcuts, kept first for easy access.
-        item {
-            val featuredLinks = listOf(
-                "PaliaAPK Hub" to "https://paliaapkhub.com",
-                "Palia AI" to "https://paliaapkhub.com",
-                "Facebook" to "https://www.facebook.com",
-                "Instagram" to "https://www.instagram.com"
-            )
-            Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
-                Text(
-                    text = "Your shortcuts",
-                    style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold)
-                )
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.SpaceBetween
-                ) {
-                    featuredLinks.forEach { (title, url) ->
-                        ShortcutItemView(
-                            shortcut = QuickShortcutItem(id = -title.hashCode().toLong(), title = title, url = url),
-                            onClick = { viewModel.openUrl(url) },
-                            onLongClick = {}
-                        )
-                    }
-                }
             }
         }
 
