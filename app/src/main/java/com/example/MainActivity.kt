@@ -72,6 +72,7 @@ import com.example.ui.bookmarks.BookmarksScreen
 import com.example.ui.browser.BrowserScreen
 import com.example.ui.downloads.DownloadsScreen
 import com.example.ui.home.HomeScreen
+import com.example.ui.news.NewsScreen
 import com.example.ui.settings.SettingsScreen
 import com.example.ui.tabs.TabsScreen
 import com.example.ui.theme.DownloadGreen
@@ -329,6 +330,9 @@ fun PaliaBrowserApp(viewModel: BrowserViewModel) {
                 }
                 MainNavigationTab.SETTINGS -> {
                     SettingsScreen(viewModel = viewModel)
+                }
+                MainNavigationTab.NEWS -> {
+                    NewsScreen(viewModel = viewModel)
                 }
             }
         }
