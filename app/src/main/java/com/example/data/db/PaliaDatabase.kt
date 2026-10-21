@@ -48,6 +48,12 @@ abstract class PaliaDatabase : RoomDatabase() {
                                 populateInitialShortcuts(getDatabase(context))
                             }
                         }
+                        override fun onOpen(db: SupportSQLiteDatabase) {
+                            super.onOpen(db)
+                            CoroutineScope(Dispatchers.IO).launch {
+                                populateInitialShortcuts(getDatabase(context))
+                            }
+                        }
                     })
                     .build()
                 INSTANCE = instance
@@ -68,7 +74,10 @@ abstract class PaliaDatabase : RoomDatabase() {
                 QuickShortcutItem(title = "Reddit", url = "https://www.reddit.com", isDefault = true, iconName = "forum"),
                 QuickShortcutItem(title = "Archive.org", url = "https://archive.org", isDefault = true, iconName = "public")
             )
-            db.shortcutDao().insertShortcuts(defaults)
+            val dao = db.shortcutDao()
+            defaults.forEach { item ->
+                if (dao.countByUrl(item.url) == 0) dao.insertShortcut(item)
+            }
         }
     }
 }
