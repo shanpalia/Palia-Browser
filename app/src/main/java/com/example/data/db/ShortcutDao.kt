@@ -23,4 +23,7 @@ interface ShortcutDao {
 
     @Query("SELECT COUNT(*) FROM shortcuts")
     suspend fun getCount(): Int
+
+    @Query("SELECT COUNT(*) FROM shortcuts WHERE url = :url")
+    suspend fun countByUrl(url: String): Int
 }
