@@ -331,8 +331,8 @@ fun HomeScreen(
                     )
                 }
                 Row(verticalAlignment = Alignment.CenterVertically) {
-                    TextButton(onClick = { viewModel.openUrl("https://news.google.com") }) {
-                        Text("News page", color = PaliaCyan)
+                    TextButton(onClick = { viewModel.navigateTo(MainNavigationTab.NEWS) }) {
+                        Text("View all", color = PaliaCyan)
                     }
                     IconButton(onClick = { viewModel.refreshNews() }) {
                         Icon(Icons.Default.Refresh, contentDescription = "Refresh news", tint = PaliaCyan)
