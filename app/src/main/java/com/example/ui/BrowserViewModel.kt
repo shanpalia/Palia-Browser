@@ -34,7 +34,8 @@ enum class MainNavigationTab {
     TABS,
     DOWNLOADS,
     BOOKMARKS,
-    SETTINGS
+    SETTINGS,
+    NEWS
 }
 
 sealed class WebCommand {
