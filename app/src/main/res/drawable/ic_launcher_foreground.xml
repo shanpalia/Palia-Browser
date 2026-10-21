@@ -1,8 +1,18 @@
 <?xml version="1.0" encoding="utf-8"?>
-<layer-list xmlns:android="http://schemas.android.com/apk/res/android">
-    <item
-        android:width="108dp"
-        android:height="108dp"
-        android:gravity="center"
-        android:drawable="@drawable/palia_browser_icon" />
-</layer-list>
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="108dp"
+    android:height="108dp"
+    android:viewportWidth="108"
+    android:viewportHeight="108">
+    <path android:fillColor="#FFFFFF" android:pathData="M17,22 Q17,16 23,16 H85 Q91,16 91,22 V86 Q91,92 85,92 H23 Q17,92 17,86 Z"/>
+    <path android:fillColor="#082B72" android:pathData="M22,28 H86 V82 H22 Z"/>
+    <path android:fillColor="#08C9F2" android:pathData="M31,47 A23,23 0,1 0,77 47 A23,23 0,1 0,31 47"/>
+    <path android:fillColor="#FFFFFF" android:pathData="M43,26 C34,34 35,54 46,68 C39,53 42,38 51,26 Z"/>
+    <path android:fillColor="#FFFFFF" android:pathData="M55,25 C66,31 73,43 70,55 C67,43 61,35 55,25 Z"/>
+    <path android:fillColor="#0B4AA8" android:pathData="M31,43 C41,38 48,42 52,48 C47,55 40,59 33,56 Z"/>
+    <path android:fillColor="#0B4AA8" android:pathData="M57,49 C64,43 71,45 76,49 L72,59 L62,63 Z"/>
+    <path android:strokeColor="#7AF6FF" android:strokeWidth="3" android:fillColor="#00000000" android:pathData="M13,63 C27,89 76,86 94,48"/>
+    <path android:fillColor="#24E0B1" android:pathData="M66,64 A17,17 0,1 0,100 64 A17,17 0,1 0,66 64"/>
+    <path android:fillColor="#FFFFFF" android:pathData="M72,65 L91,54 L83,75 L79,67 Z"/>
+    <path android:fillColor="#087E8B" android:pathData="M79,67 L83,75 L82,64 Z"/>
+</vector>
