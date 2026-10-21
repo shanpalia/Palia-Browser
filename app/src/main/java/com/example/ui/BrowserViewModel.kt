@@ -27,6 +27,7 @@ import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.flow.first
 
 enum class MainNavigationTab {
     HOME,
@@ -234,7 +235,11 @@ class BrowserViewModel(application: Application) : AndroidViewModel(application)
             val updatedUrl = url ?: tab.url
             val updatedTitle = title ?: tab.title
             // Save to history if page loaded and not incognito
-            if (url != null && !tab.isIncognito && url != "about:home" && !tab.isLoading) {
+            // WebView calls onPageFinished with isLoading=false. Use the incoming
+            // state here, not the previous tab state (which is still loading).
+            if (url != null && isLoading == false && !tab.isIncognito &&
+                (updatedUrl.startsWith("https://") || updatedUrl.startsWith("http://"))
+            ) {
                 viewModelScope.launch {
                     browserRepo.addHistory(updatedTitle, updatedUrl)
                 }
@@ -292,7 +297,12 @@ class BrowserViewModel(application: Application) : AndroidViewModel(application)
         if (current.isHome) return
 
         viewModelScope.launch {
-            browserRepo.addBookmark(current.title, current.url)
+            val alreadyBookmarked = browserRepo.isBookmarked(current.url).first()
+            if (alreadyBookmarked) {
+                browserRepo.deleteBookmarkByUrl(current.url)
+            } else {
+                browserRepo.addBookmark(current.title, current.url)
+            }
         }
     }
 
