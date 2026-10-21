@@ -1,6 +1,7 @@
 package com.example.ui.browser
 
 import android.Manifest
+import android.os.Build
 import android.annotation.SuppressLint
 import android.content.pm.PackageManager
 import android.content.Intent
@@ -122,7 +123,7 @@ fun BrowserWebView(
                 javaScriptCanOpenWindowsAutomatically = false
                 setSupportMultipleWindows(false)
                 cacheMode = WebSettings.LOAD_DEFAULT
-                safeBrowsingEnabled = true
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) safeBrowsingEnabled = true
             }
 
             CookieManager.getInstance().setAcceptThirdPartyCookies(this, true)
