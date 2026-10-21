@@ -100,7 +100,13 @@ fun HomeScreen(
     var searchQuery by remember { mutableStateOf("") }
     var showAddShortcutDialog by remember { mutableStateOf(false) }
 
-    LaunchedEffect(settings.newsLanguage) { viewModel.refreshNews() }
+    LaunchedEffect(settings.newsLanguage) {
+        viewModel.refreshNews()
+        while (true) {
+            kotlinx.coroutines.delay(15 * 60 * 1000L)
+            viewModel.refreshNews()
+        }
+    }
 
     LazyColumn(
         modifier = modifier
@@ -109,51 +115,31 @@ fun HomeScreen(
         contentPadding = PaddingValues(top = 20.dp, bottom = 32.dp),
         verticalArrangement = Arrangement.spacedBy(20.dp)
     ) {
-        // Palia Browser Brand Header with Logo
+        // Compact UC-style brand header: icon and title stay at the top-left.
         item {
-            Column(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(top = 12.dp, bottom = 4.dp),
-                horizontalAlignment = Alignment.CenterHorizontally
+            Row(
+                modifier = Modifier.fillMaxWidth().padding(top = 4.dp, bottom = 2.dp),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.Start
             ) {
-                Box(
-                    modifier = Modifier
-                        .size(80.dp)
-                        .clip(RoundedCornerShape(20.dp))
-                        .background(
-                            Brush.linearGradient(
-                                listOf(PaliaCyan.copy(alpha = 0.25f), PaliaBlue.copy(alpha = 0.4f))
-                            )
-                        )
-                        .border(1.5.dp, PaliaCyan.copy(alpha = 0.6f), RoundedCornerShape(20.dp)),
-                    contentAlignment = Alignment.Center
-                ) {
-                    Image(
-                        painter = painterResource(id = R.drawable.img_palia_logo),
-                        contentDescription = "Palia Browser Logo",
-                        modifier = Modifier
-                            .size(68.dp)
-                            .clip(RoundedCornerShape(16.dp))
+                Image(
+                    painter = painterResource(id = R.drawable.palia_browser_icon),
+                    contentDescription = "Palia Browser",
+                    modifier = Modifier.size(48.dp).clip(RoundedCornerShape(15.dp))
+                )
+                Spacer(modifier = Modifier.width(12.dp))
+                Column {
+                    Text(
+                        text = "Palia Browser",
+                        style = MaterialTheme.typography.titleLarge.copy(fontWeight = FontWeight.ExtraBold),
+                        color = MaterialTheme.colorScheme.primary
+                    )
+                    Text(
+                        text = "Fast • Secure • Resumable Downloads",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
                 }
-
-                Spacer(modifier = Modifier.height(12.dp))
-
-                Text(
-                    text = "Palia Browser",
-                    style = MaterialTheme.typography.headlineMedium.copy(
-                        fontWeight = FontWeight.ExtraBold,
-                        letterSpacing = 0.5.sp
-                    ),
-                    color = MaterialTheme.colorScheme.primary
-                )
-
-                Text(
-                    text = "Fast • Secure • Resumable Downloads",
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                )
             }
         }
 
@@ -276,6 +262,34 @@ fun HomeScreen(
             }
         }
 
+        // Palia ecosystem and social shortcuts, kept first for easy access.
+        item {
+            val featuredLinks = listOf(
+                "PaliaAPK Hub" to "https://paliaapkhub.com",
+                "Palia AI" to "https://paliaapkhub.com",
+                "Facebook" to "https://www.facebook.com",
+                "Instagram" to "https://www.instagram.com"
+            )
+            Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                Text(
+                    text = "Your shortcuts",
+                    style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold)
+                )
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween
+                ) {
+                    featuredLinks.forEach { (title, url) ->
+                        ShortcutItemView(
+                            shortcut = QuickShortcutItem(id = -title.hashCode().toLong(), title = title, url = url),
+                            onClick = { viewModel.openUrl(url) },
+                            onLongClick = {}
+                        )
+                    }
+                }
+            }
+        }
+
         // Quick Shortcuts Section Header
         item {
             Row(
@@ -344,8 +358,13 @@ fun HomeScreen(
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
                 }
-                IconButton(onClick = { viewModel.refreshNews() }) {
-                    Icon(Icons.Default.Refresh, contentDescription = "Refresh news", tint = PaliaCyan)
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    TextButton(onClick = { viewModel.openUrl("https://news.google.com") }) {
+                        Text("News page", color = PaliaCyan)
+                    }
+                    IconButton(onClick = { viewModel.refreshNews() }) {
+                        Icon(Icons.Default.Refresh, contentDescription = "Refresh news", tint = PaliaCyan)
+                    }
                 }
             }
         }
