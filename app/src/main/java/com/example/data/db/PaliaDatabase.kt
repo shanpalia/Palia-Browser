@@ -57,6 +57,10 @@ abstract class PaliaDatabase : RoomDatabase() {
 
         private suspend fun populateInitialShortcuts(db: PaliaDatabase) {
             val defaults = listOf(
+                QuickShortcutItem(title = "PaliaAPK Hub", url = "https://paliaapkhub.com", isDefault = true, iconName = "palia"),
+                QuickShortcutItem(title = "Palia AI", url = "https://paliaapkhub.com/palia-ai", isDefault = true, iconName = "ai"),
+                QuickShortcutItem(title = "Facebook", url = "https://www.facebook.com", isDefault = true, iconName = "facebook"),
+                QuickShortcutItem(title = "Instagram", url = "https://www.instagram.com", isDefault = true, iconName = "instagram"),
                 QuickShortcutItem(title = "Google", url = "https://www.google.com", isDefault = true, iconName = "search"),
                 QuickShortcutItem(title = "Wikipedia", url = "https://www.wikipedia.org", isDefault = true, iconName = "book"),
                 QuickShortcutItem(title = "DuckDuckGo", url = "https://duckduckgo.com", isDefault = true, iconName = "shield"),
