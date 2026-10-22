@@ -294,6 +294,8 @@ fun HomeScreen(
         // Shortcuts Grid
         item {
             val displayShortcuts = shortcuts
+                .filterNot { it.isDefault && it.title in setOf("Wikipedia", "DuckDuckGo", "Reddit", "Archive.org") }
+                .distinctBy { it.url.trimEnd('/').lowercase() }
             Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
                 displayShortcuts.chunked(4).forEach { rowShortcuts ->
                     Row(
@@ -640,14 +642,20 @@ private suspend fun loadShortcutFavicon(url: String): Bitmap? = withContext(Disp
     try {
         val uri = Uri.parse(url)
         val host = uri.host?.removePrefix("www.") ?: return@withContext null
+        val encodedSite = Uri.encode("https://$host")
 
-        // Prefer the site's own favicon so the shortcut shows the original website icon.
-        val direct = decodeFavicon("https://$host/favicon.ico")
-        if (direct != null) return@withContext direct
-
-        // Fallback for sites that do not expose /favicon.ico.
-        val fallback = "https://www.google.com/s2/favicons?sz=128&domain_url=${Uri.encode("https://$host")}"
-        decodeFavicon(fallback)
+        // Google favicon service is the most reliable for sites whose root does not expose /favicon.ico.
+        val providers = listOf(
+            "https://www.google.com/s2/favicons?sz=128&domain_url=$encodedSite",
+            "https://$host/favicon.ico",
+            "https://$host/favicon.png",
+            "https://$host/apple-touch-icon.png"
+        )
+        for (faviconUrl in providers) {
+            val bitmap = decodeFavicon(faviconUrl)
+            if (bitmap != null && bitmap.width > 1 && bitmap.height > 1) return@withContext bitmap
+        }
+        null
     } catch (_: Exception) {
         null
     }
