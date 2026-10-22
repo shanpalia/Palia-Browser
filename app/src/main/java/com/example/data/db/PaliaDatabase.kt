@@ -67,14 +67,13 @@ abstract class PaliaDatabase : RoomDatabase() {
                 QuickShortcutItem(title = "Palia AI", url = "https://paliaapkhub.com/palia-ai", isDefault = true, iconName = "ai"),
                 QuickShortcutItem(title = "Facebook", url = "https://www.facebook.com", isDefault = true, iconName = "facebook"),
                 QuickShortcutItem(title = "Instagram", url = "https://www.instagram.com", isDefault = true, iconName = "instagram"),
+                QuickShortcutItem(title = "YouTube", url = "https://www.youtube.com", isDefault = true, iconName = "youtube"),
                 QuickShortcutItem(title = "Google", url = "https://www.google.com", isDefault = true, iconName = "search"),
-                QuickShortcutItem(title = "Wikipedia", url = "https://www.wikipedia.org", isDefault = true, iconName = "book"),
-                QuickShortcutItem(title = "DuckDuckGo", url = "https://duckduckgo.com", isDefault = true, iconName = "shield"),
-                QuickShortcutItem(title = "GitHub", url = "https://github.com", isDefault = true, iconName = "code"),
-                QuickShortcutItem(title = "Reddit", url = "https://www.reddit.com", isDefault = true, iconName = "forum"),
-                QuickShortcutItem(title = "Archive.org", url = "https://archive.org", isDefault = true, iconName = "public")
+                QuickShortcutItem(title = "GitHub", url = "https://github.com", isDefault = true, iconName = "code")
             )
             val dao = db.shortcutDao()
+            dao.removeUnwantedDefaultShortcuts()
+            dao.removeDuplicateDefaultShortcuts()
             defaults.forEach { item ->
                 if (dao.countByUrl(item.url) == 0) dao.insertShortcut(item)
             }
