@@ -26,4 +26,10 @@ interface ShortcutDao {
 
     @Query("SELECT COUNT(*) FROM shortcuts WHERE url = :url")
     suspend fun countByUrl(url: String): Int
+
+    @Query("DELETE FROM shortcuts WHERE isDefault = 1 AND title IN ('Wikipedia', 'DuckDuckGo', 'Reddit', 'Archive.org')")
+    suspend fun removeUnwantedDefaultShortcuts()
+
+    @Query("DELETE FROM shortcuts WHERE isDefault = 1 AND id NOT IN (SELECT MIN(id) FROM shortcuts WHERE isDefault = 1 GROUP BY url)")
+    suspend fun removeDuplicateDefaultShortcuts()
 }
